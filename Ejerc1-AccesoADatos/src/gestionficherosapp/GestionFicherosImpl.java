@@ -4,6 +4,7 @@
 package gestionficherosapp;
 
 import java.io.File;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 
 import gestionficheros.FormatoVistas;
@@ -62,22 +63,51 @@ public class GestionFicherosImpl implements GestionFicheros {
 
 	@Override
 	public void creaCarpeta(String arg0) throws GestionFicherosException {
-		File file = new File(carpetaDeTrabajo,arg0);
 		//que se pueda escribir -> lanzará una excepción
 		//que no exista -> lanzará una excepción
-		//crear la carpeta -> lanzará una excepción
+		File file = new File(carpetaDeTrabajo,arg0);
+		if(!file.exists()&&carpetaDeTrabajo.exists()){
+			file.mkdirs();
+		}else{
+			//crear la carpeta -> lanzará una excepción
+			throw new GestionFicherosException("En la carpeta que quiere crear el archivo no existe o no tiene los permisos de escritura.");
+		}
+		//actualiza la lista de archivos de nuestro explorador de archivos.
 		actualiza();
 	}
 
 	@Override
 	public void creaFichero(String arg0) throws GestionFicherosException {
-		// TODO Auto-generated method stub
-
+		File file = new File(carpetaDeTrabajo,arg0);
+		//que se pueda escribir -> lanzará una excepción
+		//que no exista -> lanzará una excepción
+		if(!file.exists()&&carpetaDeTrabajo.canWrite()){
+			try {
+				file.createNewFile();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}else{
+			//crear el fichero -> lanzará una excepción
+			throw new GestionFicherosException("En la carpeta que quiere crear el archivo no existe o no tiene los permisos de escritura.");
+		}
+		actualiza();
+		//actualiza la lista de archivos de nuestro explorador de archivos.
 	}
 
 	@Override
 	public void elimina(String arg0) throws GestionFicherosException {
-		// TODO Auto-generated method stub
+		File file = new File(carpetaDeTrabajo,arg0);
+		//que se pueda escribir -> lanzará una excepción
+		//que no exista -> lanzará una excepción
+		if(file.exists()&&carpetaDeTrabajo.canWrite()){
+			file.delete();
+		}else{
+			//eliminar un fichero -> lanzará una excepción
+			throw new GestionFicherosException("En la carpeta que quiere crear el archivo no existe o no tiene los permisos de escritura.");
+		}
+		actualiza();
+		//actualiza la lista de archivos de nuestro explorador de archivos.
 
 	}
 
@@ -202,11 +232,9 @@ public class GestionFicherosImpl implements GestionFicheros {
 			strBuilder.append("No oculto");
 			strBuilder.append("\n");
 		}
-		
-		
-		//bytes
+
 		}else{
-			strBuilder.append("ERROR -- El archivo seleccionado no existe o no se disponen de los permisos necesarios."+"\n");
+			throw new GestionFicherosException("El archivo no existe o no tiene los permisos necesarios.");
 		}
 		
 		return strBuilder.toString();
@@ -256,8 +284,14 @@ public class GestionFicherosImpl implements GestionFicheros {
 	@Override
 	public void renombra(String arg0, String arg1)
 			throws GestionFicherosException {
-		// TODO Auto-generated method stub
-
+		File file = new File(carpetaDeTrabajo,arg0);
+		File file1 = new File(carpetaDeTrabajo,arg1);
+		if(carpetaDeTrabajo.canWrite()&&file.exists()){
+			file.renameTo(file1);
+		}else{
+			throw new GestionFicherosException("El archivo que quiere renombrear no existe o se encuentra en una carpeta sin permisos de lectura.");
+		}
+		actualiza();
 	}
 
 	@Override
@@ -294,7 +328,6 @@ public class GestionFicherosImpl implements GestionFicheros {
 					+ "un directorio, pero " + file.getAbsolutePath()
 					+ " no es un directorio.");
 		}
-
 		// se controla que haya permisos para leer carpeta
 		if (!file.canRead()) {
 			throw new GestionFicherosException(
